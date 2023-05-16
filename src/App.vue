@@ -1,16 +1,20 @@
 <template >
   <div class="app">
     <h1>Страница с постами</h1>
-    <div  class="app__btns"> <my-dialog v-model:show="dialogVisible">
+    <my-input v-model="searchQuery"
+      placeholder="Поиск...."/>
+    <div class="app__btns">
+      <my-button class="dialog-btn" @click="showDialog">Создать пост</my-button>
+      <my-select v-model="selectedSort" :options="sortOptions"></my-select>
+      <my-dialog v-model:show="dialogVisible">
         <post-form @create="createPost"></post-form>
       </my-dialog>
-      <my-select v-model="selectedSort" :options="sortedOptions"></my-select>
     </div>
 
-    <my-button class="dialog-btn" @click="showDialog">Создать пост</my-button>
-
-
-    <post-list v-if="!isPostLoading" :posts="posts" @remove="removePost"></post-list>
+    <post-list 
+    v-if="!isPostLoading" 
+    :posts="searchPosts" 
+    @remove="removePost"></post-list>
     <div v-else>
       <p>Идет загрузка</p>
     </div>
@@ -30,11 +34,12 @@ export default {
     return {
       posts: [],
       dialogVisible: false,
-      isPostLoading: false, 
-      selectedSort:'',
-      sortedOptions:[
-        {value:'title', name:'По названию'},
-        {value:'description', name:'По описанию'},
+      isPostLoading: false,
+      selectedSort: '',
+      searchQuery:'',
+      sortOptions: [
+        { value: 'title', name: 'По названию' },
+        { value: 'description', name: 'По описанию' },
       ]
     }
   },
@@ -65,6 +70,15 @@ export default {
   },
   mounted() {
     this.fetchPosts()
+  },
+  computed: {
+    sortedPost() {
+      return [...this.posts].sort((post1, post2) =>
+        post1[this.selectedSort]?.localeCompare(post2[this.selectedSort]))
+    },
+    searchPosts(){
+      return this.sortedPost.filter(post => post.title.toLowerCase().includes(this.searchQuery.toLowerCase()))
+    }
   }
 }
 </script>
@@ -80,10 +94,9 @@ body {
   margin: 20px 100px
 }
 
-.dialog-btn {
+
+.app__btns {
   margin: 20px 0px;
-}
-.app__btns{
   display: flex;
   justify-content: space-between;
 }
