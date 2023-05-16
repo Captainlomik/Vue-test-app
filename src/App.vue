@@ -1,8 +1,7 @@
 <template >
   <div class="app">
     <h1>Страница с постами</h1>
-    <my-input v-model="searchQuery"
-      placeholder="Поиск...."/>
+    <my-input v-model="searchQuery" placeholder="Поиск...." />
     <div class="app__btns">
       <my-button class="dialog-btn" @click="showDialog">Создать пост</my-button>
       <my-select v-model="selectedSort" :options="sortOptions"></my-select>
@@ -11,13 +10,11 @@
       </my-dialog>
     </div>
 
-    <post-list 
-    v-if="!isPostLoading" 
-    :posts="searchPosts" 
-    @remove="removePost"></post-list>
+    <post-list v-if="!isPostLoading" :posts="searchPosts" @remove="removePost"></post-list>
     <div v-else>
       <p>Идет загрузка</p>
     </div>
+    <my-pagination :pages="totalPages" :pageNumber="page"></my-pagination>
   </div>
 </template>
 
@@ -36,7 +33,10 @@ export default {
       dialogVisible: false,
       isPostLoading: false,
       selectedSort: '',
-      searchQuery:'',
+      searchQuery: '',
+      page: 1,
+      limit: 10,
+      totalPages: 0,
       sortOptions: [
         { value: 'title', name: 'По названию' },
         { value: 'description', name: 'По описанию' },
@@ -57,7 +57,14 @@ export default {
     async fetchPosts() {
       try {
         this.isPostLoading = true
-        const response = await axios.get('https://jsonplaceholder.typicode.com/posts?_limit=10')
+        const response = await axios.get('https://jsonplaceholder.typicode.com/posts', {
+          params: {
+            _page: this.page,
+            _limit: this.limit
+          }
+        })
+        this.totalPages = Math.ceil(response.headers['x-total-count'] / this.limit)
+        console.log(this.totalPages)
         this.posts = response.data
       }
       catch (e) {
@@ -76,7 +83,7 @@ export default {
       return [...this.posts].sort((post1, post2) =>
         post1[this.selectedSort]?.localeCompare(post2[this.selectedSort]))
     },
-    searchPosts(){
+    searchPosts() {
       return this.sortedPost.filter(post => post.title.toLowerCase().includes(this.searchQuery.toLowerCase()))
     }
   }
