@@ -14,7 +14,8 @@
     <div v-else>
       <p>Идет загрузка</p>
     </div>
-    <my-pagination :pages="totalPages" :pageNumber="page"></my-pagination>
+    <div ref="observer" class="observer"></div>
+    <!-- <my-pagination @my-event="page" :pages="totalPages" :pageNumber="page"></my-pagination> -->
   </div>
 </template>
 
@@ -64,7 +65,6 @@ export default {
           }
         })
         this.totalPages = Math.ceil(response.headers['x-total-count'] / this.limit)
-        console.log(this.totalPages)
         this.posts = response.data
       }
       catch (e) {
@@ -73,10 +73,37 @@ export default {
       finally {
         this.isPostLoading = false
       }
+    },
+    async loadMorePOst() {
+      try {
+        this.page += 1
+        const response = await axios.get('https://jsonplaceholder.typicode.com/posts', {
+          params: {
+            _page: this.page,
+            _limit: this.limit
+          }
+        })
+        this.totalPages = Math.ceil(response.headers['x-total-count'] / this.limit)
+        this.posts = [...this.posts, ...response.data]
+      }
+      catch (e) {
+        console.error('Error!')
+      }
     }
   },
   mounted() {
     this.fetchPosts()
+    const options = {
+      rootMargin: '0px',
+      threshold: 1.0
+    }
+    const callback = (entries) => {
+      if (entries[0].isIntersecting && this.page < this.totalPages) {
+        this.loadMorePOst()
+      }
+    }
+    const observer = new IntersectionObserver(callback, options)
+    observer.observe(this.$refs.observer)
   },
   computed: {
     sortedPost() {
@@ -86,6 +113,8 @@ export default {
     searchPosts() {
       return this.sortedPost.filter(post => post.title.toLowerCase().includes(this.searchQuery.toLowerCase()))
     }
+  },
+  watch: {
   }
 }
 </script>
@@ -106,5 +135,9 @@ body {
   margin: 20px 0px;
   display: flex;
   justify-content: space-between;
+}
+
+.observer {
+  height: 30px;
 }
 </style>
