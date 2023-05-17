@@ -14,7 +14,7 @@
       <div v-else>
         <p>Идет загрузка</p>
       </div>
-      <div ref="observer" class="observer"></div>
+      <div v-intersection="loadMorePost" class="observer"></div>
       <!-- <my-pagination @my-event="page" :pages="totalPages" :pageNumber="page"></my-pagination> -->
     </div>
   </template>
@@ -74,7 +74,7 @@
           this.isPostLoading = false
         }
       },
-      async loadMorePOst() {
+      async loadMorePost() {
         try {
           this.page += 1
           const response = await axios.get('https://jsonplaceholder.typicode.com/posts', {
@@ -93,17 +93,6 @@
     },
     mounted() {
       this.fetchPosts()
-      const options = {
-        rootMargin: '0px',
-        threshold: 1.0
-      }
-      const callback = (entries) => {
-        if (entries[0].isIntersecting && this.page < this.totalPages) {
-          this.loadMorePOst()
-        }
-      }
-      const observer = new IntersectionObserver(callback, options)
-      observer.observe(this.$refs.observer)
     },
     computed: {
       sortedPost() {
